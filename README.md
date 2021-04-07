@@ -5,3 +5,5 @@
 
 *** 
 Enunciados, soluciones y códigos usados en las soluciones de las tareas de la asignatura de Procesos Estocásticos en Tiempo Discreto.
+
+Códigos en R usando Markdown Notebooks
