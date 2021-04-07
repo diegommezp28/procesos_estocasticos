@@ -1,0 +1,70 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+
+n <- 5
+nsim <- 100
+#Generacion de las muestras
+sim <- apply(matrix(runif(nsim*n), nrow=n), 2, sort)
+```
+
+
+
+```{r}
+
+par(mfrow=c(2, 3))
+
+#Definición de la función de densidad 
+orderDist <- function(x, k, n, ...) {
+  z <- lfactorial(n) - lfactorial(k-1) - lfactorial(n-k) +
+    (k-1)*punif(x, log.p=TRUE, ...) +
+    (n-k)*punif(x, log.p=TRUE, lower.tail=FALSE, ...) +
+    dunif(x, log=TRUE, ...)
+      return(exp(z))
+}
+#Gráfica
+for (i in 1:5){
+  hist(sim[i, , drop=FALSE], freq = FALSE, breaks = 10,
+              xlab="Value",
+         sub=paste(nsim, "Iteraciones de tamaño", n),
+         main=paste('Uniform[0,1] ', " estadístico orden", i))
+  curve(orderDist(x, i, n), add=TRUE, col=hsv(runif(1), 0.8, 0.7), lwd=2)
+  
+}
+
+
+```
+
+
+
+```{r}
+par(mfrow=c(1, 1))
+
+#Definición de CDF teórico
+cdfteor <- function(x, k, n, ...) {
+  i <- k:n
+  z <- sum( choose(n, i)*punif(x)^(i)*(1-punif(x))^(n-i))
+      return(z)
+}
+
+#Gráfica
+for (i in 1:5){
+  empirical <- ecdf(sim[i, , drop=FALSE])
+  plot(empirical, main=paste('CDF Uniform[0,1] ', "estadístico ", i))
+  curve(Vectorize(cdfteor)(x, i, n), add=TRUE, col=hsv(runif(1), 0.8, 0.7), lwd=2, from = 0, to = 1)
+}
+
+
+```
+
+
+```
+
+
+```
+

@@ -1,0 +1,262 @@
+---
+title: "Tarea 4+5, punto 7"
+output: html_notebook
+---
+
+**Diego Andrés Gómez Polo**
+da.gomezp@uniandes.edu.co - 201713198. 
+
+ ***
+Esta es mi solución del punto 7 de la tarea 4+5 de procesos estocásticos en tiempo discreto 2021-10
+
+
+
+
+* **7.1.**  Simular 20 caminos de longitud adecuada de 1).1 para p = 1/4 en una única gráfica. 
+
+Suponemos la distribución de reproducción como Geo(1/4)
+
+```{r}
+
+#Esta es la logitud de caminos que se va a usar 
+L = 13
+
+#Número de caminos (Número de veces que se repite la simulación )
+N = 20
+
+#Parámetro para la función de reproducción geométrica del proceso
+p = 1/4
+
+#Semilla de aleatoriedad 
+set.seed(1)
+
+all_proccesses = cbind(c())
+
+for( k in 1:N){
+  #Número de descendiente en el paso anterior. Empieza en 1 (El mater-patriae)
+  prev_descendientes = 1
+  proccess = c()
+  for(i in 1:L){
+    #Nuevos descendientes
+    xi = sum(rgeom(prev_descendientes, p))
+    prev_descendientes = xi
+    proccess = append(proccess, xi)
+  }
+  #Añade el proceso como columna a la matriz de procesos
+  all_proccesses = cbind(all_proccesses, proccess)
+  
+  
+}
+#Grafica las columnas de la matriz de procesos como lineas de distinto color
+matplot(all_proccesses, type = "l")
+```
+
+* **7.2.**. Simular 20 caminos de longitud adecuada de 1).2 para p = 1/4 en una única gráfica. Repetir este
+ejercicio para p = 1/2 y p = 3/4
+
+
+
+```{r}
+
+p1 = 1/4
+p2 = 1/2
+p3 = 3/4
+
+#Devuelve una función que crea n muestras con distribucion p*delta_0 + (1-p)*delta_2 
+D <- function(p){
+  distrib <- function(n){
+    sample(x = c(0, 2), size = n, replace = T, prob = c(p, 1 - p) )
+  }
+  return(distrib)
+}
+
+
+#Mismo código del punto anterior pero en forma de función para que reciba la distribución de reproducción 
+
+procesoRamificacion <- function(reproduccion, main){
+  L = 15
+  #Número de caminos (Número de veces que se repite la simulación )
+  N = 40
+  
+  set.seed(1)
+  all_proccesses = cbind(c())
+  
+  for( k in 1:N){
+    #Número de descendiente en el paso anterior. Empieza en 1 (El mater-patriae)
+    prev_descendientes = 1
+    proccess = c()
+    for(i in 1:L){
+      #Nuevos descendientes
+      xi = sum(reproduccion(prev_descendientes))
+      prev_descendientes = xi
+      proccess = append(proccess, xi)
+    }
+  #Añade el proceso como columna a la matriz de procesos
+  all_proccesses = cbind(all_proccesses, proccess)
+  }
+  #Grafica las columnas de la matriz de procesos como lineas de distinto color
+  matplot(all_proccesses, type = "l", main=main, ylab = "Descendientes", xlab = "Generaciones")
+}
+
+procesoRamificacion(D(p1), "Ramificación con p=1/4")
+procesoRamificacion(D(p2), "Ramificación con p=1/2")
+procesoRamificacion(D(1/10), "Ramificación con p=3/4")
+
+
+```
+
+
+* **7.3.**. Simular 20 caminos de longitud adecuada de 2).2 hasta la absorbción en una unica gráfica
+
+
+```{r}
+h = c(1,2,3)
+y = c(5, 6, 7)
+
+cbind(h, y)[3,][1]
+
+
+#simula y grafica una cadena de markov n veces basado en una matriz de transición que entra por parámetro y el estado inicial
+markovProccesTilLenOrAbsortion <- function(matrizTransicion, n, initState=1, startsAt = 1, endsAt = 6, 
+                                           main="", xlab = "", ylab = "", 
+                                           absortion = TRUE, len=0, includeInit=FALSE){
+  set.seed(2)
+  all_proccesses = list()
+  
+  for( i in 1:n){
+    
+    prevState = initState
+    proccess = c()
+    if(includeInit) proccess = c(proccess, initState)
+    
+    while(absortion || (!absortion && length(proccess) < len) ){
+      #Parar si llega a un estado de absorción. Cambia indices dependendiendo si los estados empiezan en 0 o 1
+      if(absortion && matrizTransicion[prevState + 1-startsAt, prevState + 1-startsAt] == 1){
+        break
+      }
+      else{
+        currentProbabilities = matrizTransicion[prevState + 1-startsAt,]
+        #Genera una muestra de tamaño 1 con la distribucion de paso del estado previo al siguiente dado por la matriz de transicion
+        currentState = sample(x = startsAt:endsAt, size = 1, replace=T, prob=currentProbabilities)
+        proccess = c(proccess, currentState)
+        prevState = currentState
+        
+      }
+    }
+    all_proccesses = c(all_proccesses, list(proccess))
+  }
+  #Le pone nombre
+  names(all_proccesses) <- mapply(toString, c(startsAt:endsAt))
+  print(all_proccesses)
+  
+  
+  plot(unlist(all_proccesses),type="n",xlim=c(1,max(sapply(all_proccesses,length))), main = main, ylab = ylab, xlab = xlab, ylim=c(startsAt, endsAt))
+  mapply(lines,all_proccesses,col=seq_along(all_proccesses),lty=2)
+}
+
+matrizTransicionDados = rbind(c(1/6, 1/6, 1/6, 1/6, 1/6, 1/6),
+                              c(0, 1/3, 1/6, 1/6, 1/6, 1/6),
+                              c(0, 0, 1/2, 1/6, 1/6, 1/6),
+                              c(0, 0, 0, 2/3, 1/6, 1/6),
+                              c(0, 0, 0, 0, 5/6, 1/6),
+                              c(0, 0, 0, 0, 0, 1))
+#print(matrizTransicionDados)
+markovProccesTilLenOrAbsortion(matrizTransicionDados, 20, 
+                          main = "Lanzamiento de dados hasta absorción (6)",
+                          xlab = "Tiempo",
+                          ylab = "Caras del dado")
+
+
+```
+
+* **7.4.**.  Simular 20 caminos de longitud adecuada de la cadena de Markov 4) hasta la absorbción en una
+única gráfica para β = 1/2 y α = 1/3 y α'= 1/2.
+
+```{r}
+
+a = 1/3
+ap = 1/2
+b = 1/2
+bp = 0
+g = 1 - a - b
+gp = 1 - ap - b
+
+
+
+
+matrizTransicion74 = rbind(c(0, 0, 1, 0, 0, 0),
+                           c(a, 0, 0, g, b, 0 ),
+                           c(0, 1/2, 0, 1/2, 0, 0),
+                           c(ap, gp, 0, 0, 0, b),
+                           c(0, 0, 0, 0, 1, 0),
+                           c(0, 0, 0, 0, 0, 1))
+
+
+markovProccesTilLenOrAbsortion(matrizTransicion74, n = 20, startsAt = 0, endsAt = 5, initState = 0, includeInit = TRUE,
+                          main = "Cadena de Markov p 7.4",
+                          xlab = "Tiempo",
+                          ylab = "Estados")
+
+
+```
+* **7.5.**. caminos de longitud adecuada de la cadena de Markov 5) hasta la absorbción en una
+única gráfica para γ = γ' = 1/2, y α = 1/3, y α'= 1/2
+
+```{r}
+a = 1/3
+ap = 1/2
+y = 1/2
+yp = 1/2
+b = 1 - yp
+bp = 1 - ap - y
+
+matrizTransicion75 = rbind(c(0, 1/2, 1/2, 0, 0),
+                           c(0, bp, ap, y, 0),
+                           c(0, 0, b, 0, yp),
+                           c(0, 0, 0, 1, 0),
+                           c(0, 0, 0, 0, 1))
+
+markovProccesTilLenOrAbsortion(matrizTransicion75, n = 20, startsAt = 0, endsAt = 4, initState = 0, includeInit = TRUE,
+                          main = "Cadena de Markov p 7.5",
+                          xlab = "Tiempo",
+                          ylab = "Estados")
+
+
+```
+* **7.6.**. Simular 20 caminos de longitud adecuada de la cadena de Markov 6) hasta la absorbción en una
+única gráfica para α = 0.4, α' = 0.5 y α" = 0.6
+
+
+```{r}
+
+a = 0.4
+ap = 0.5
+app = 0.6
+b = 1 - a
+bp = 1 - app
+
+matrizTransicion76 = rbind(c(0, 1/3, 1/3, 1/3, 0, 0, 0),
+                           c(0, 0, app, 0, bp, 0, 0),
+                           c(0, 0, 0, a, 0, b, 0),
+                           c(0, ap, 0, 0, 0, 0, bp),
+                           c(0, 0, 0, 0, 1, 0, 0),
+                           c(0, 0, 0, 0, 0, 1, 0),
+                           c(0, 0, 0, 0, 0, 0, 1))
+
+
+markovProccesTilLenOrAbsortion(matrizTransicion76, n = 20, startsAt = 0, endsAt = 6, initState = 0, includeInit = TRUE,
+                          main = "Cadena de Markov p 7.6",
+                          xlab = "Tiempo",
+                          ylab = "Estados")
+
+```
+```{python}
+library(reticulate)
+use_python(~\anaconda3\python.exe)
+import numpy as np
+
+
+x = np.array([1,2,3])
+print(sum(x))
+```
+

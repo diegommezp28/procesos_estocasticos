@@ -1,0 +1,99 @@
+
+
+
+# Taller 3 Procesos Estocásticos 2021-10.
+
+- Diego andrés Gómez Polo. Cod: **201713198**. 
+da.gomezp@uniandes.edu.co
+
+***
+
+### Punto 4.
+
+
+```{r}
+n = 100
+p = 0.55
+s = 20
+k = 2
+
+rw <- function(s, k, n, p){
+  realizations = list()
+  for (i in 1:n){
+    s0 = k
+    walk = c(s0)
+    while (s0 != 0 && s0!=s) {
+      newStep = s0 + sample(c(-1, 1), 1, TRUE, prob = c(1 - p, p))
+      walk = append(walk, newStep)
+      s0 = newStep 
+    }
+    #print(walk)
+    realizations[[i]] <-  c(walk)
+  }
+  return( realizations)
+}
+
+realizations = rw(s, k, n, p)
+
+print(realizations[1:3])
+
+```
+```{r}
+
+lostProportion <- function(realizations){
+  total = 0
+  for( juego in realizations){
+    if(juego[length(juego)] == 0 ){
+      total = total + 1
+    }
+  }
+  return( total / length(realizations))
+}
+
+lostRatio = lostProportion(realizations)
+print(lostRatio)
+
+```
+```{r}
+expectedDuration <- function(realizations){
+  total = 0
+  for( juego in realizations){
+      total = total + length(juego)
+  }
+  return( total / length(realizations))
+}
+
+duration = expectedDuration(realizations)
+print(duration)
+
+```
+## Graph
+
+```{r}
+
+n = 2000
+p = 0.55
+s = 20
+expectedLosts = c()
+meanDuration = c()
+
+for(i in 1:(s-1)){
+  realizations_from_i = rw(s, i, n, p)
+  losts = lostProportion(realizations_from_i)
+  duration = expectedDuration(realizations_from_i)
+  expectedLosts[i] = losts
+  meanDuration[i] = duration
+}
+
+plot(expectedLosts, 
+     main = 'Probabilidad de llegar a 0 vs posición de salida',
+     xlab = 'Posición inicial',
+     ylab = 'Probabilidad de perder' )
+
+plot(meanDuration, 
+     main = 'Tiempo promedio del juego vs posición de salida',
+     xlab = 'Posición inicial',
+     ylab = 'Tiempo promedio' )
+
+```
+
